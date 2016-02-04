@@ -1,8 +1,6 @@
 module Main where
 
-import Lib
+import Dominion
 
 main :: IO ()
-main = do
-    someFunc
-    putStrLn "This is the application"
+main = plop "This is the application"
