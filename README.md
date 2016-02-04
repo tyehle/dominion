@@ -1,3 +1,3 @@
-# dominion
+# Dominion
 
-This is a terrible dominion ai in haskell written for a class
+This is a terrible dominion AI in haskell written for a class
