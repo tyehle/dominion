@@ -5,6 +5,8 @@ module Dominion
 )
 where
 
+import System.Random
+
 data Action = Act | Buy deriving (Eq, Ord, Enum)
 
 data Player = Player { hand :: [Card],
@@ -20,10 +22,6 @@ data State = State {bank :: [(Card, Int)], players :: [Player], phase :: Action}
 
 data Card = Card {title :: Int, cost :: Int, action :: State -> State}
 
-
-
-main :: IO ()
-main = return ()
 
 plop :: String -> IO ()
 plop [] = putChar '\n' >> return ()
