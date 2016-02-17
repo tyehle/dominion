@@ -15,9 +15,11 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     Dominion
+  exposed-modules:     Dominion, Cards
   build-depends:       base >= 4.7 && < 5
                      , random
+                     , parsec
+                     , mtl
   default-language:    Haskell2010
 
 executable dominion-exe
