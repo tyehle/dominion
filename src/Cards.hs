@@ -1,6 +1,6 @@
 module Cards
 (
-    Card(..), cost, worth, coins
+    Card(..), cost, worth
 )
 where
 
@@ -65,9 +65,12 @@ worth :: Card -> Int
 worth Copper = 1
 worth Silver = 2
 worth Gold   = 3
+-- Victory Cards
+worth Estate   = 1
+worth Duchy    = 3
+worth Province = 6
 
 
-
-coins :: [Card] -> Int
-coins [] = 0
-coins (c:rest) = (worth c) + (coins rest)
+sumBy :: Num a => (b -> a) -> [b] -> a
+sumBy _ []     = 0
+sumBy f (x:xs) = (f x) + sumBy f xs
