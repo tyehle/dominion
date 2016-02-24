@@ -1,31 +1,32 @@
-module Dominion
+module Parser
 (
-    plop, notification, zoom
+    -- plop,
+    parseFrom,
+    Notification(..),
+    parseNotification,
+    state, card, treasure, victory, action, play, notification, name, number
 )
 where
 
-import Cards
+import Data
 
 import Text.ParserCombinators.Parsec
 
+data Notification = Request GameState | Update String Action deriving (Eq, Show)
 
 
-data Action = Add Card | Clean (Maybe Card) | Buy Card | Act Card [Card] deriving (Eq, Show)
+parseFrom :: GenParser Char () a -> String -> Either ParseError a
+parseFrom rule input = parse rule "function-argument" input
 
-data GameState = GameState { players :: [String], supply :: [Card], trash :: [Card]
-                           , actions :: Int, buys :: Int, coins :: Int
-                           ,deck :: [Card], hand :: [Card], plays :: [Card], discards :: [Card]
-                           }
+parseNotification :: String -> Notification
+parseNotification s = case parse notification "stdin" s of
+    Left e       -> error . show $ e
+    Right result -> result
 
+-- plop :: String -> IO ()
+-- plop []     = return ()
+-- plop (c:cs) = putChar c >> plop cs
 
-
-
-zoom :: GenParser Char () a -> String -> Either ParseError a
-zoom rule input = parse rule "function-argument" input
-
-plop :: String -> IO ()
-plop []     = return ()
-plop (c:cs) = putChar c >> plop cs
 
 
 state :: GenParser Char st GameState
@@ -67,11 +68,10 @@ action = string "mine" >> return Mine
 
 
 inParens :: GenParser Char st a -> GenParser Char st a
-inParens p = char '(' >> many1 space >> p <* many1 space <* char ')'
+inParens p = char '(' >> many space >> p <* many space <* char ')'
 
 
 play :: GenParser Char st Action
--- play = card >> return (Clean Nothing)
 play = inParens $ do {
         string "act" >> many1 space;
         string "mine" >> many1 space;
@@ -82,17 +82,16 @@ play = inParens $ do {
     }
     <|> ( string "add" >> many1 space >> treasure >>= return . Add )
     <|> ( string "buy" >> many1 space >> card >>= return . Buy )
-    <|> ( string "clean" >> many1 space >> optionMaybe card >>= return . Clean )
+    <|> ( string "clean" >> optionMaybe (many1 space >> card) >>= return . Clean )
 
 
--- don't parse the (move state) messages for the server
-notification :: GenParser Char st (String, Action)
+notification :: GenParser Char st Notification
 notification = inParens $ do {
         string "moved" >> many1 space;
         n <- name;
         many1 space;
         p <- play;
-        return (n, p)
+        return $ Update n p
     }
 
 
