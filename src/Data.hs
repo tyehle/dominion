@@ -8,6 +8,7 @@ where
 
 
 import Data.List (intercalate)
+import Data.Char (toLower)
 
 
 data GameState = GameState { players :: [String], supply :: [Card], trash :: [Card]
@@ -27,13 +28,16 @@ data Card = Cellar | Moat |
             Estate | Duchy | Province deriving (Eq, Show)
 
 
+-- Wraps a list of strings in parens, and lower cases all of them
 wrap :: [String] -> String
-wrap ss = "(" ++ intercalate " " ss ++ ")"
+wrap ss = "(" ++ intercalate " " (map (map toLower) ss) ++ ")"
 
 instance Show Action where
     show (Add c) = wrap ["add", show c]
     show (Clean (Just c)) = wrap ["clean", show c]
     show (Clean Nothing) = "(clean)"
+    show (Buy c) = wrap ["buy", show c]
+    show (Act c cs) = wrap $ "act" : show c : map show cs
 
 
 

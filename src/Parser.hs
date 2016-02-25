@@ -1,7 +1,6 @@
 module Parser
 (
-    -- plop,
-    parseFrom,
+    parseFrom, labeledList,
     Notification(..),
     parseNotification,
     state, card, treasure, victory, action, play, notification, name, number
@@ -12,8 +11,12 @@ import Data
 
 import Text.ParserCombinators.Parsec
 
+
 data Notification = Request GameState | Update String Action deriving (Eq, Show)
 
+
+
+-- exported functions
 
 parseFrom :: GenParser Char () a -> String -> Either ParseError a
 parseFrom rule input = parse rule "function-argument" input
@@ -23,80 +26,90 @@ parseNotification s = case parse notification "stdin" s of
     Left e       -> error . show $ e
     Right result -> result
 
--- plop :: String -> IO ()
--- plop []     = return ()
--- plop (c:cs) = putChar c >> plop cs
+----
 
 
+
+-- convenience functions
+
+inParens :: GenParser Char st a -> GenParser Char st a
+inParens p = between (char '(') (char ')') $ spaces *> p <* spaces
+
+word :: String -> GenParser Char st String
+word = try . string
+
+labeledList :: String -> GenParser Char st a -> GenParser Char st [a]
+labeledList label items = inParens $ word label >> (try (many1 space >> sepEndBy items (many1 space)) <|> return [])
+
+----
+
+
+
+-- The actual grammar
 
 state :: GenParser Char st GameState
 state = inParens $ do {
-        players <- labeled "players" $ sepBy1 name (many1 space);
-        supply  <- labeled "supply" cardList;
-        trash   <- labeled "trash" cardList;
+        players <- many space >> labeledList "players" name;
+        supply  <- many1 space >> labeledList "supply"  card;
+        trash   <- many1 space >> labeledList "trash"   card;
 
-        actions <- labeled "actions" $ number;
-        buys    <- labeled "buys"    $ number;
-        coins   <- labeled "coins"   $ number;
+        actions <- many1 space >> inParens ( word "actions" >> many1 space >> number );
+        buys    <- many1 space >> inParens ( word "buys"    >> many1 space >> number );
+        coins   <- many1 space >> inParens ( word "coins"   >> many1 space >> number );
 
-        deck     <- labeled "deck"     $ cardList;
-        hand     <- labeled "hand"     $ cardList;
-        plays    <- labeled "plays"    $ cardList;
-        discards <- labeled "discards" $ cardList;
+        deck     <- many1 space >> labeledList "deck"     card;
+        hand     <- many1 space >> labeledList "hand"     card;
+        plays    <- many1 space >> labeledList "plays"    card;
+        discards <- many1 space >> labeledList "discards" card;
 
         return $ GameState players supply trash actions buys coins deck hand plays discards
     }
-
-labeled :: String -> GenParser Char st a -> GenParser Char st a
-labeled label p = inParens $ string label >> many1 space >> p
-
-cardList :: GenParser Char st [Card]
-cardList = inParens $ sepBy card (many1 space)
 
 
 card :: GenParser Char st Card
 card = treasure <|> victory <|> action
 
 treasure :: GenParser Char st Card
-treasure = (string "copper" >> return Copper) <|> (string "silver" >> return Silver) <|> (string "gold" >> return Gold)
+treasure = (word "copper" >> return Copper)
+       <|> (word "silver" >> return Silver)
+       <|> (word "gold" >> return Gold)
 
 victory :: GenParser Char st Card
-victory = (string "estate" >> return Estate) <|> (string "duchy" >> return Duchy) <|> (string "province" >> return Province)
+victory = (word "estate" >> return Estate)
+      <|> (word "duchy" >> return Duchy)
+      <|> (word "province" >> return Province)
 
 action :: GenParser Char st Card
-action = string "mine" >> return Mine
-
-
-inParens :: GenParser Char st a -> GenParser Char st a
-inParens p = char '(' >> many space >> p <* many space <* char ')'
+action = word "mine" >> return Mine
 
 
 play :: GenParser Char st Action
 play = inParens $ do {
-        string "act" >> many1 space;
-        string "mine" >> many1 space;
+        word "act" >> many1 space;
+        word "mine" >> many1 space;
         t1 <- treasure;
         many1 space;
         t2 <- treasure;
         return $ Act Mine [t1, t2]
     }
-    <|> ( string "add" >> many1 space >> treasure >>= return . Add )
-    <|> ( string "buy" >> many1 space >> card >>= return . Buy )
-    <|> ( string "clean" >> optionMaybe (many1 space >> card) >>= return . Clean )
+    <|> ( word "add" >> many1 space >> treasure >>= return . Add )
+    <|> ( word "buy" >> many1 space >> card >>= return . Buy )
+    <|> ( word "clean" >> optionMaybe (many1 space >> card) >>= return . Clean )
 
 
 notification :: GenParser Char st Notification
 notification = inParens $ do {
-        string "moved" >> many1 space;
+        word "moved" >> many1 space;
         n <- name;
         many1 space;
         p <- play;
         return $ Update n p
     }
+    <|> ( word "move" >> many1 space >> state >>= return . Request )
 
 
 name :: GenParser Char st String
-name = many1 letter
+name = many1 (oneOf (['0'..'9'] ++ ['a'..'z'] ++ ['A'..'Z'] ++ "-_"))
 
 number :: GenParser Char st Int
 number = many1 digit >>= return . read
