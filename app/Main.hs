@@ -3,12 +3,40 @@ module Main where
 import Parser (parseNotification, Notification(..))
 import Agent (act)
 
+import System.IO
+
 
 main :: IO ()
-main = getLine >>= processLine >> main
+main = do
+    debug <- openFile "log" WriteMode
+    hSetBuffering debug NoBuffering
+    hSetBuffering stdin NoBuffering
+    hSetBuffering stdout NoBuffering
+    hPutStrLn debug "starting"
+    runClient debug
 
 
-processLine :: String -> IO ()
-processLine line = case parseNotification line of
-    Update name action -> return ()
-    Request state      -> putStrLn . show $ act state
+readSExp :: IO String
+readSExp = eatUntil '(' >> readUntilClosed 1 >>= return . ('(' :)
+    where eatUntil c = getChar >>= (\cur -> if cur == c then return () else eatUntil c)
+
+readUntilClosed :: Int -> IO String
+readUntilClosed 0 = return ""
+readUntilClosed n = do
+    cur <- getChar
+    case cur of
+        '(' -> readUntilClosed (n+1) >>= return . (cur :)
+        ')' -> readUntilClosed (n-1) >>= return . (cur :)
+        _   -> readUntilClosed n     >>= return . (cur :)
+
+
+runClient :: Handle -> IO ()
+runClient debug = readSExp >>= processMessage debug >> runClient debug
+
+
+processMessage :: Handle -> String -> IO ()
+processMessage debug line = do
+    hPutStrLn debug $ "processing line: " ++ line
+    case parseNotification line of
+        Update name action -> return ()
+        Request state      -> hPutStrLn debug (show (act state)) >> putStrLn (show (act state))

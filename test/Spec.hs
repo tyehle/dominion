@@ -1,13 +1,14 @@
 
 import Parser
 import Data
+import Agent
 
 import Test.Tasty
 import Test.Tasty.HUnit
 
 main = defaultMain tests
 
-tests = testGroup "all tests" [parsing]
+tests = testGroup "all tests" [parsing, agent]
 
 
 parsing = testGroup "parser tests"
@@ -76,4 +77,9 @@ parsing = testGroup "parser tests"
 
             testCase "mine" $ parseFrom card "mine" @?= Right Mine
         ]
+    ]
+
+
+agent = testGroup "agent"
+    [
     ]
