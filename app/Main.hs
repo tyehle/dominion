@@ -8,12 +8,19 @@ import System.IO
 
 main :: IO ()
 main = do
-    debug <- openFile "log" WriteMode
-    hSetBuffering debug NoBuffering
     hSetBuffering stdin NoBuffering
     hSetBuffering stdout NoBuffering
-    hPutStrLn debug "starting"
-    runClient debug
+    runClient
+
+
+runClient :: IO ()
+runClient = readSExp >>= processMessage >> runClient
+
+
+processMessage :: String -> IO ()
+processMessage message = case parseNotification message of
+        Update name action -> return ()
+        Request state      -> putStrLn . show . act $ state
 
 
 readSExp :: IO String
@@ -28,15 +35,3 @@ readUntilClosed n = do
         '(' -> readUntilClosed (n+1) >>= return . (cur :)
         ')' -> readUntilClosed (n-1) >>= return . (cur :)
         _   -> readUntilClosed n     >>= return . (cur :)
-
-
-runClient :: Handle -> IO ()
-runClient debug = readSExp >>= processMessage debug >> runClient debug
-
-
-processMessage :: Handle -> String -> IO ()
-processMessage debug line = do
-    hPutStrLn debug $ "processing line: " ++ line
-    case parseNotification line of
-        Update name action -> return ()
-        Request state      -> hPutStrLn debug (show (act state)) >> putStrLn (show (act state))
