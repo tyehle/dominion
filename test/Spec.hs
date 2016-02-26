@@ -8,7 +8,7 @@ import Test.Tasty.HUnit
 
 main = defaultMain tests
 
-tests = testGroup "all tests" [parsing, agent]
+tests = testGroup "all tests" [parsing, agent, dataTests]
 
 
 parsing = testGroup "parser tests"
@@ -82,4 +82,17 @@ parsing = testGroup "parser tests"
 
 agent = testGroup "agent"
     [
+    ]
+
+
+dataTests = testGroup "data"
+    [
+        testGroup "action show"
+        [
+            testCase "add" $ show (Add Gold) @?= "(add gold)",
+            testCase "clean empty" $ show (Clean Nothing) @?= "(clean)",
+            testCase "clean something" $ show (Clean (Just Duchy)) @?= "(clean duchy)",
+            testCase "buy" $ show (Buy Province) @?= "(buy province)",
+            testCase "act" $ show (Act Mine [Silver, Gold]) @?= "(act mine silver gold)"
+        ]
     ]
