@@ -18,8 +18,8 @@ runClient input = processMessage input >>= runClient
 
 
 processMessage :: String -> IO String
-processMessage message
+processMessage input
     | Update name action <- notification = return otherInput
     | Request state <- notification      = (putStrLn . show . act) state >> return otherInput
-    where (notification, otherInput) = parseNotification message
+    where (notification, otherInput) = parseNotification input
 
