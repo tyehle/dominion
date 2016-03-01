@@ -51,10 +51,10 @@ parsing = testGroup "parser tests"
 
         testGroup "notifications"
         [
-            testCase "update normal" $ parseNotification "(moved john (clean copper))" @?= Update "john" (Clean (Just Copper)),
-            testCase "update spaces" $ parseNotification "( moved player-2 (clean copper) )" @?= Update "player-2" (Clean (Just Copper)),
-            testCase "update act" $ parseNotification "(moved player_1 (act mine copper silver))" @?= Update "player_1" (Act Mine [Copper, Silver]),
-            testCase "update moved" $ parseNotification "(move ((players) (supply) (trash) (actions 0) (buys 0) (coins 0) (deck) (hand) (plays) (discards)))" @?= Request (GameState [] [] [] 0 0 0 [] [] [] [])
+            testCase "update normal" $ parseFrom notification "(moved john (clean copper))" @?= Right (Update "john" (Clean (Just Copper))),
+            testCase "update spaces" $ parseFrom notification "( moved player-2 (clean copper) )" @?= Right (Update "player-2" (Clean (Just Copper))),
+            testCase "update act" $ parseFrom notification "(moved player_1 (act mine copper silver))" @?= Right (Update "player_1" (Act Mine [Copper, Silver])),
+            testCase "update moved" $ parseFrom notification "(move ((players) (supply) (trash) (actions 0) (buys 0) (coins 0) (deck) (hand) (plays) (discards)))" @?= Right (Request (GameState [] [] [] 0 0 0 [] [] [] []))
         ],
 
         testGroup "atomics"

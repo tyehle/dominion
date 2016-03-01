@@ -21,8 +21,8 @@ data Notification = Request GameState | Update String Action deriving (Eq, Show)
 parseFrom :: GenParser Char () a -> String -> Either ParseError a
 parseFrom rule input = parse rule "function-argument" input
 
-parseNotification :: String -> Notification
-parseNotification s = case parse notification "stdin" s of
+parseNotification :: String -> (Notification, String)
+parseNotification s = case parse (withRemaining notification) "stdin" s of
     Left e       -> error . show $ e
     Right result -> result
 
@@ -31,6 +31,12 @@ parseNotification s = case parse notification "stdin" s of
 
 
 -- convenience functions
+
+withRemaining :: Parser a -> Parser (a, String)
+withRemaining p = do
+    stuff <- p
+    rest <- getInput
+    return (stuff, rest)
 
 inParens :: GenParser Char st a -> GenParser Char st a
 inParens p = between (char '(') (char ')') $ spaces *> p <* spaces
