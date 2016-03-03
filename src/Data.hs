@@ -1,6 +1,6 @@
 module Data
 (
-    GameState(..), Action(..), Card(..),
+    Notification(..), GameState(..), Action(..), Card(..),
     cost, worth,
     isTreasure, isAction, isVictory
 )
@@ -9,6 +9,9 @@ where
 
 import Data.List (intercalate)
 import Data.Char (toLower)
+
+
+data Notification = Request GameState | Update String Action deriving (Eq, Show)
 
 
 data GameState = GameState { players :: [String], supply :: [Card], trash :: [Card]
@@ -64,6 +67,7 @@ isAction Remodel = True
 isAction Smithy  = True
 isAction Market = True
 isAction Mine   = True
+isAction _ = False
 
 
 
@@ -78,11 +82,11 @@ cost Remodel = 4
 cost Smithy  = 4
 cost Market = 5
 cost Mine   = 5
--- Treasures
+-- Treasures --
 cost Copper = 0
 cost Silver = 3
 cost Gold   = 6
--- Victory Cards
+-- Victory Cards --
 cost Estate   = 2
 cost Duchy    = 5
 cost Province = 8
@@ -92,7 +96,7 @@ worth :: Card -> Int
 worth Copper = 1
 worth Silver = 2
 worth Gold   = 3
--- Victory Cards
+-- Victory Cards --
 worth Estate   = 1
 worth Duchy    = 3
 worth Province = 6

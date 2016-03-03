@@ -1,7 +1,7 @@
 module Main where
 
-import Parser (parseNotification, Notification(..))
-import Agent (act)
+import Parser (parseNotification)
+import Agent (respond)
 
 import System.IO
 
@@ -14,12 +14,7 @@ main = do
 
 
 runClient :: String -> IO ()
-runClient input = processMessage input >>= runClient
-
-
-processMessage :: String -> IO String
-processMessage input
-    | Update name action <- notification = return otherInput
-    | Request state <- notification      = (putStrLn . show . act) state >> return otherInput
-    where (notification, otherInput) = parseNotification input
+runClient "" = return ()
+runClient input = (putStr . respond) notification >> runClient moreInput
+    where (notification, moreInput) = parseNotification input
 

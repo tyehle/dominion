@@ -1,5 +1,6 @@
 module Agent
 (
+    respond,
     act,
     tryAction, tryMine,
     tryAdd,
@@ -9,6 +10,10 @@ where
 
 import Data
 import Data.List (find)
+
+respond :: Notification -> String
+respond (Update name action) = ""
+respond (Request state) = show . act $ state
 
 act :: GameState -> Action
 act state = case tryAction state >>= tryAdd >>= tryBuy of

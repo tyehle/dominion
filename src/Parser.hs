@@ -1,7 +1,6 @@
 module Parser
 (
     parseFrom, labeledList,
-    Notification(..),
     parseNotification,
     state, card, treasure, victory, action, play, notification, name, number
 )
@@ -12,19 +11,16 @@ import Data
 import Text.ParserCombinators.Parsec
 
 
-data Notification = Request GameState | Update String Action deriving (Eq, Show)
-
-
-
 -- exported functions
 
 parseFrom :: GenParser Char () a -> String -> Either ParseError a
 parseFrom rule input = parse rule "function-argument" input
 
 parseNotification :: String -> (Notification, String)
-parseNotification s = case parse (withRemaining notification) "stdin" s of
-    Left e       -> error . show $ e
-    Right result -> result
+parseNotification input
+    | Left e       <- parsed = error . show $ e
+    | Right result <- parsed = result
+    where parsed = parse (withRemaining notification) "stdin" input
 
 ----
 
@@ -56,8 +52,8 @@ labeledList label items = inParens $ word label >> (try (many1 space >> sepEndBy
 state :: GenParser Char st GameState
 state = inParens $ do {
         players <- many space >> labeledList "players" name;
-        supply  <- many1 space >> labeledList "supply"  card;
-        trash   <- many1 space >> labeledList "trash"   card;
+        supply  <- many1 space >> labeledList "supply" card;
+        trash   <- many1 space >> labeledList "trash"  card;
 
         actions <- many1 space >> inParens ( word "actions" >> many1 space >> number );
         buys    <- many1 space >> inParens ( word "buys"    >> many1 space >> number );
