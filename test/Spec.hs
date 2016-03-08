@@ -32,7 +32,17 @@ parsing = testGroup "parser tests"
 
             testCase "add" $ parseFrom play "(add copper)" @?= Right (Add Copper),
 
-            testCase "act" $ parseFrom play "(act mine copper silver)" @?= Right (Act Mine [Copper, Silver])
+            testGroup "act"
+            [
+                testCase "mine" $ parseFrom play "(act mine copper silver)" @?= Right (Act Mine [Copper, Silver]),
+                testCase "cellar" $ parseFrom play "(act cellar province mine duchy copper)" @?= Right (Act Cellar [Province, Mine, Duchy, Copper]),
+                testCase "market" $ parseFrom play "(act market)" @?= Right (Act Market []),
+                testCase "remodel" $ parseFrom play "(act remodel gold province)" @?= Right (Act Remodel [Gold, Province]),
+                testCase "smithy" $ parseFrom play "(act smithy)" @?= Right (Act Smithy []),
+                testCase "village" $ parseFrom play "(act village)" @?= Right (Act Village []),
+                testCase "woodcutter" $ parseFrom play "(act woodcutter)" @?= Right (Act Woodcutter []),
+                testCase "workshop" $ parseFrom play "(act workshop)" @?= Right (Act Workshop [])
+            ]
         ],
 
         testGroup "state"
@@ -75,7 +85,14 @@ parsing = testGroup "parser tests"
             testCase "duchy" $ parseFrom card "duchy" @?= Right Duchy,
             testCase "province" $ parseFrom card "province" @?= Right Province,
 
-            testCase "mine" $ parseFrom card "mine" @?= Right Mine
+            testCase "mine" $ parseFrom card "mine" @?= Right Mine,
+            testCase "cellar" $ parseFrom card "cellar" @?= Right Cellar,
+            testCase "market" $ parseFrom card "market" @?= Right Market,
+            testCase "remodel" $ parseFrom card "remodel" @?= Right Remodel,
+            testCase "smithy" $ parseFrom card "smithy" @?= Right Smithy,
+            testCase "village" $ parseFrom card "village" @?= Right Village,
+            testCase "woodcutter" $ parseFrom card "woodcutter" @?= Right Woodcutter,
+            testCase "workshop" $ parseFrom card "workshop" @?= Right Workshop
         ]
     ]
 

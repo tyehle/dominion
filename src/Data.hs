@@ -1,8 +1,8 @@
 module Data
 (
     Notification(..), GameState(..), Action(..), Card(..),
-    cost, worth,
-    isTreasure, isAction, isVictory
+    cost, treasureWorth, victoryWorth,
+    isTreasure, isAction
 )
 where
 
@@ -50,12 +50,6 @@ isTreasure Silver = True
 isTreasure Gold   = True
 isTreasure _      = False
 
-isVictory :: Card -> Bool
-isVictory Estate   = True
-isVictory Duchy    = True
-isVictory Province = True
-isVictory _        = False
-
 isAction :: Card -> Bool
 isAction Cellar = True
 isAction Moat   = True
@@ -92,11 +86,13 @@ cost Duchy    = 5
 cost Province = 8
 
 
-worth :: Card -> Int
-worth Copper = 1
-worth Silver = 2
-worth Gold   = 3
--- Victory Cards --
-worth Estate   = 1
-worth Duchy    = 3
-worth Province = 6
+treasureWorth :: Card -> Int
+treasureWorth Copper = 1
+treasureWorth Silver = 2
+treasureWorth Gold   = 3
+
+victoryWorth :: Card -> Int
+victoryWorth Estate   = 1
+victoryWorth Duchy    = 3
+victoryWorth Province = 6
+victoryWorth _ = 0

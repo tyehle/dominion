@@ -41,7 +41,11 @@ word :: String -> GenParser Char st String
 word = try . string
 
 labeledList :: String -> GenParser Char st a -> GenParser Char st [a]
-labeledList label items = inParens $ word label >> (try (many1 space >> sepEndBy items (many1 space)) <|> return [])
+labeledList label items = prefixedList (word label) items >>= \(_, list) -> return list
+
+prefixedList :: GenParser Char st p -> GenParser Char st a -> GenParser Char st (p, [a])
+prefixedList label items = inParens $ label >>= \pre -> itemList >>= return . (,) pre
+    where itemList = try (many1 space >> sepEndBy items (many1 space)) <|> return []
 
 ----
 
@@ -82,21 +86,23 @@ victory = (word "estate" >> return Estate)
       <|> (word "province" >> return Province)
 
 action :: GenParser Char st Card
-action = word "mine" >> return Mine
+action = (word "mine" >> return Mine)
+     <|> (word "cellar" >> return Cellar)
+     <|> (word "market" >> return Market)
+     <|> (word "remodel" >> return Remodel)
+     <|> (word "smithy" >> return Smithy)
+     <|> (word "village" >> return Village)
+     <|> (word "woodcutter" >> return Woodcutter)
+     <|> (word "workshop" >> return Workshop)
 
 
 play :: GenParser Char st Action
-play = inParens $ do {
-        word "act" >> many1 space;
-        word "mine" >> many1 space;
-        t1 <- treasure;
-        many1 space;
-        t2 <- treasure;
-        return $ Act Mine [t1, t2]
-    }
-    <|> ( word "add" >> many1 space >> treasure >>= return . Add )
-    <|> ( word "buy" >> many1 space >> card >>= return . Buy )
-    <|> ( word "clean" >> optionMaybe (many1 space >> card) >>= return . Clean )
+play = (try (prefixedList actionPrefix card >>= return . buildAction))
+    <|> (inParens $ ( word "add" >> many1 space >> treasure >>= return . Add )
+                <|> ( word "buy" >> many1 space >> card >>= return . Buy )
+                <|> ( word "clean" >> optionMaybe (many1 space >> card) >>= return . Clean ))
+    where   actionPrefix = word "act" >> many1 space >> action
+            buildAction (played, cards) = Act played cards
 
 
 notification :: GenParser Char st Notification
