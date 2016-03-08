@@ -68,3 +68,6 @@ deckPDraw :: [Card] -> Card -> Double
 deckPDraw allCards card = count / total
     where count = fromIntegral . length . filter (== card) $ allCards
           total = fromIntegral . length $ allCards
+
+expectedTreasure :: (Fractional a) => [Card] -> a
+expectedTreasure deck = (sum (map treasureWorth deck)) / (fromIntegral (length deck))

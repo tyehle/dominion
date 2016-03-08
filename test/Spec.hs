@@ -41,7 +41,7 @@ parsing = testGroup "parser tests"
                 testCase "smithy" $ parseFrom play "(act smithy)" @?= Right (Act Smithy []),
                 testCase "village" $ parseFrom play "(act village)" @?= Right (Act Village []),
                 testCase "woodcutter" $ parseFrom play "(act woodcutter)" @?= Right (Act Woodcutter []),
-                testCase "workshop" $ parseFrom play "(act workshop)" @?= Right (Act Workshop [])
+                testCase "workshop" $ parseFrom play "(act workshop village)" @?= Right (Act Workshop [Village])
             ]
         ],
 

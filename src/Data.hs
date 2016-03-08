@@ -65,7 +65,7 @@ isAction _ = False
 
 
 
-cost :: Card -> Int
+cost :: (Num a) => Card -> a
 cost Cellar = 2
 cost Moat   = 2
 cost Village    = 3
@@ -86,12 +86,13 @@ cost Duchy    = 5
 cost Province = 8
 
 
-treasureWorth :: Card -> Int
+treasureWorth :: (Num a) => Card -> a
 treasureWorth Copper = 1
 treasureWorth Silver = 2
 treasureWorth Gold   = 3
+treasureWorth _ = 0
 
-victoryWorth :: Card -> Int
+victoryWorth :: (Num a) => Card -> a
 victoryWorth Estate   = 1
 victoryWorth Duchy    = 3
 victoryWorth Province = 6
