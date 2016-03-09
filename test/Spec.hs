@@ -11,6 +11,7 @@ main = defaultMain tests
 tests = testGroup "all tests" [parsing, agent, dataTests]
 
 
+
 parsing = testGroup "parser tests"
     [
         testGroup "labeledList"
@@ -97,9 +98,43 @@ parsing = testGroup "parser tests"
     ]
 
 
+
+fullSuply = [Copper, Silver, Gold,
+             Estate, Duchy, Province,
+             Mine, Cellar, Market, Remodel, Smithy, Village, Woodcutter, Workshop]
+
+mkState actions buys coins cards = GameState ["me", "other"] fullSuply [] actions buys coins [] cards [] []
+
+
 agent = testGroup "agent"
     [
+        testGroup "act"
+        [
+            testCase "mine" $ tryAction (mkState 1 1 0 [Mine, Copper]) @?= Left (Act Mine [Copper, Silver]),
+            testCase "village" $ tryAction (mkState 1 1 0 [Mine, Smithy, Village, Copper]) @?= Left (Act Village []),
+            testCase "smithy" $ tryAction (mkState 1 1 0 [Mine, Smithy, Copper]) @?= Left (Act Smithy [])
+        ],
+
+        testGroup "add"
+        [
+            testCase "copper" $ tryAdd (mkState 0 1 0 [Copper]) @?= Left (Add Copper),
+            testCase "silver" $ tryAdd (mkState 0 1 0 [Silver]) @?= Left (Add Silver),
+            testCase "gold" $ tryAdd (mkState 0 1 0 [Gold]) @?= Left (Add Gold),
+            testCase "failure" $ tryAdd (mkState 0 1 0 []) @?= Right (mkState 0 1 0 [])
+        ],
+
+        testGroup "buy"
+        [
+            testCase "province" $ tryBuy (mkState 0 1 8 []) @?= Left (Buy Province),
+            testCase "gold" $ tryBuy (mkState 0 1 6 []) @?= Left (Buy Gold),
+            testCase "mine" $ tryBuy (mkState 0 1 5 [Copper]) @?= Left (Buy Mine),
+            testCase "smithy" $ tryBuy (mkState 0 1 4 [Copper]) @?= Left (Buy Smithy),
+            testCase "village" $ tryBuy (mkState 0 1 4 [Smithy]) @?= Left (Buy Village),
+            testCase "silver" $ tryBuy (mkState 0 1 4 [Smithy, Village]) @?= Left (Buy Silver),
+            testCase "duchy" $ tryBuy (mkState 0 1 5 [Smithy, Village, Mine]) @?= Left (Buy Duchy)
+        ]
     ]
+
 
 
 dataTests = testGroup "data"
@@ -110,6 +145,16 @@ dataTests = testGroup "data"
             testCase "clean empty" $ show (Clean Nothing) @?= "(clean)",
             testCase "clean something" $ show (Clean (Just Duchy)) @?= "(clean duchy)",
             testCase "buy" $ show (Buy Province) @?= "(buy province)",
-            testCase "act" $ show (Act Mine [Silver, Gold]) @?= "(act mine silver gold)"
+            testGroup "act"
+            [
+                testCase "mine" $ show (Act Mine [Silver, Gold]) @?= "(act mine silver gold)",
+                testCase "cellar" $ show (Act Cellar [Province, Mine, Duchy, Copper]) @?= "(act cellar province mine duchy copper)",
+                testCase "market" $ show (Act Market []) @?= "(act market)",
+                testCase "remodel" $ show (Act Remodel [Gold, Province]) @?= "(act remodel gold province)",
+                testCase "smithy" $ show (Act Smithy []) @?= "(act smithy)",
+                testCase "village" $ show  (Act Village []) @?= "(act village)",
+                testCase "woodcutter" $ show (Act Woodcutter []) @?= "(act woodcutter)",
+                testCase "workshop" $ show (Act Workshop [Village]) @?= "(act workshop village)"
+            ]
         ]
     ]
