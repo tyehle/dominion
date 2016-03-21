@@ -11,6 +11,12 @@ main = defaultMain tests
 tests = testGroup "all tests" [parsing, agent, dataTests]
 
 
+stateString = "( (players player_1 player-2) (supply copper copper estate province) (trash silver mine)\
+               \ (actions 1) (buys 1) (coins 0)\
+               \ (deck mine estate) (hand copper mine silver) (plays mine) (discards estate copper) )"
+stateObj = GameState ["player_1", "player-2"] [Copper, Copper, Estate, Province] [Silver, Mine]
+                      1 1 0
+                      [Mine, Estate] [Copper, Mine, Silver] [Mine] [Estate, Copper]
 
 parsing = testGroup "parser tests"
     [
@@ -42,7 +48,9 @@ parsing = testGroup "parser tests"
                 testCase "smithy" $ parseFrom play "(act smithy)" @?= Right (Act Smithy []),
                 testCase "village" $ parseFrom play "(act village)" @?= Right (Act Village []),
                 testCase "woodcutter" $ parseFrom play "(act woodcutter)" @?= Right (Act Woodcutter []),
-                testCase "workshop" $ parseFrom play "(act workshop village)" @?= Right (Act Workshop [Village])
+                testCase "workshop" $ parseFrom play "(act workshop village)" @?= Right (Act Workshop [Village]),
+                testCase "militia" $ parseFrom play "(act militia)" @?= Right (Act Militia []),
+                testCase "moat" $ parseFrom play "(act moat)" @?= Right (Act Moat [])
             ]
         ],
 
@@ -52,20 +60,28 @@ parsing = testGroup "parser tests"
                     @?= Right (GameState [] [] []
                                          0 0 0
                                          [] [] [] []),
-            testCase "normal" $ parseFrom state "( (players player_1 player-2) (supply copper copper estate province) (trash silver mine)\
-                                                 \ (actions 1) (buys 1) (coins 0)\
-                                                 \ (deck mine estate) (hand copper mine silver) (plays mine) (discards estate copper) )"
-                    @?= Right (GameState ["player_1", "player-2"] [Copper, Copper, Estate, Province] [Silver, Mine]
-                                         1 1 0
-                                         [Mine, Estate] [Copper, Mine, Silver] [Mine] [Estate, Copper] )
+            testCase "normal" $ parseFrom state stateString @?= Right stateObj
         ],
 
         testGroup "notifications"
         [
             testCase "update normal" $ parseFrom notification "(moved john (clean copper))" @?= Right (Update "john" (Clean (Just Copper))),
             testCase "update spaces" $ parseFrom notification "( moved player-2 (clean copper) )" @?= Right (Update "player-2" (Clean (Just Copper))),
-            testCase "update act" $ parseFrom notification "(moved player_1 (act mine copper silver))" @?= Right (Update "player_1" (Act Mine [Copper, Silver])),
-            testCase "update move" $ parseFrom notification "(move ((players) (supply) (trash) (actions 0) (buys 0) (coins 0) (deck) (hand) (plays) (discards)))" @?= Right (Request (GameState [] [] [] 0 0 0 [] [] [] []))
+            testCase "request" $ parseFrom notification "(moved player_1 (act mine copper silver))" @?= Right (Update "player_1" (Act Mine [Copper, Silver])),
+            testCase "update move" $ parseFrom notification "(move ((players) (supply) (trash) (actions 0) (buys 0) (coins 0) (deck) (hand) (plays) (discards)))" @?= Right (Request (GameState [] [] [] 0 0 0 [] [] [] [])),
+            testCase "attacked" $ parseFrom notification ( "(attacked (act militia) tim " ++ stateString ++ ")" ) @?= Right (Attacked (Act Militia []) "tim" stateObj),
+            testCase "attacked spaces" $ parseFrom notification ( "( attacked (act militia) tim " ++ stateString ++ " )" ) @?= Right (Attacked (Act Militia []) "tim" stateObj),
+            testCase "defended" $ parseFrom notification "(defended tim (moat))" @?= Right (Defended "tim" (Reveal Moat)),
+            testCase "defended spaces" $ parseFrom notification "( defended tim ( discard copper estate ) )" @?= Right (Defended "tim" (Discard [Copper, Estate]))
+        ],
+
+        testGroup "defense"
+        [
+            testCase "reveal moat" $ parseFrom defense "(moat)" @?= Right (Reveal Moat),
+            testCase "reveal estate" $ parseFrom defense "(estate)" @?= Right (Reveal Estate),
+            testCase "discard cards" $ parseFrom defense "(discard province mine)" @?= Right (Discard [Province, Mine]),
+            testCase "discard nothing" $ parseFrom defense "(discard)" @?= Right (Discard []),
+            testCase "discard nothing spaces" $ parseFrom defense "( discard  )" @?= Right (Discard [])
         ],
 
         testGroup "atomics"
@@ -93,7 +109,9 @@ parsing = testGroup "parser tests"
             testCase "smithy" $ parseFrom card "smithy" @?= Right Smithy,
             testCase "village" $ parseFrom card "village" @?= Right Village,
             testCase "woodcutter" $ parseFrom card "woodcutter" @?= Right Woodcutter,
-            testCase "workshop" $ parseFrom card "workshop" @?= Right Workshop
+            testCase "workshop" $ parseFrom card "workshop" @?= Right Workshop,
+            testCase "militia" $ parseFrom card "militia" @?= Right Militia,
+            testCase "moat" $ parseFrom card "moat" @?= Right Moat
         ],
 
         testGroup "external interface"

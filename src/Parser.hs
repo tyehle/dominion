@@ -2,7 +2,7 @@ module Parser
 (
     parseFrom, labeledList,
     parseNotification,
-    state, card, treasure, victory, action, play, notification, name, number
+    state, card, treasure, victory, action, play, notification, defense, name, number
 )
 where
 
@@ -94,10 +94,12 @@ action = (word "mine" >> return Mine)
      <|> (word "village" >> return Village)
      <|> (word "woodcutter" >> return Woodcutter)
      <|> (word "workshop" >> return Workshop)
+     <|> (word "militia" >> return Militia)
+     <|> (word "moat" >> return Moat)
 
 
 play :: GenParser Char st Action
-play = (try (prefixedList actionPrefix card >>= return . buildAction))
+play =  (try (prefixedList actionPrefix card >>= return . buildAction))
     <|> (inParens $ ( word "add" >> many1 space >> treasure >>= return . Add )
                 <|> ( word "buy" >> many1 space >> card >>= return . Buy )
                 <|> ( word "clean" >> optionMaybe (many1 space >> card) >>= return . Clean ))
@@ -106,14 +108,38 @@ play = (try (prefixedList actionPrefix card >>= return . buildAction))
 
 
 notification :: GenParser Char st Notification
-notification = inParens $ do {
+notification = inParens $ update <|> request <|> attacked <|> defended
+
+update =
+    do {
         word "moved" >> many1 space;
-        n <- name;
-        many1 space;
+        n <- name <* many1 space;
         p <- play;
         return $ Update n p
     }
-    <|> ( word "move" >> many1 space >> state >>= return . Request )
+
+request = word "move" >> many1 space >> state >>= return . Request
+
+attacked =
+    do {
+        word "attacked" >> many1 space;
+        act <- play <* many1 space;
+        n <- name <* many1 space;
+        s <- state;
+        return $ Attacked act n s
+    }
+
+defended =
+    do {
+        word "defended" >> many1 space;
+        n <- name <* many1 space;
+        d <- defense;
+        return $ Defended n d
+    }
+
+defense :: GenParser Char st Defense
+defense =  try ( inParens card >>= return . Reveal )
+       <|> ( labeledList "discard" card >>= return . Discard )
 
 
 name :: GenParser Char st String
