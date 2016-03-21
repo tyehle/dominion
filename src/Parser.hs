@@ -11,7 +11,7 @@ import Data
 import Text.ParserCombinators.Parsec
 
 
--- exported functions
+-- parser interface
 
 parseFrom :: GenParser Char () a -> String -> Either ParseError a
 parseFrom rule input = parse rule "function-argument" input
@@ -20,7 +20,7 @@ parseNotification :: String -> (Notification, String)
 parseNotification input
     | Left e       <- parsed = error . show $ e
     | Right result <- parsed = result
-    where parsed = parse (withRemaining notification) "stdin" input
+    where parsed = parse (withRemainingNoSpace notification) "stdin" input
 
 ----
 
@@ -28,9 +28,9 @@ parseNotification input
 
 -- convenience functions
 
-withRemaining :: Parser a -> Parser (a, String)
-withRemaining p = do
-    stuff <- p
+withRemainingNoSpace :: Parser a -> Parser (a, String)
+withRemainingNoSpace p = do
+    stuff <- spaces *> p <* spaces
     rest <- getInput
     return (stuff, rest)
 
@@ -106,14 +106,14 @@ play = (try (prefixedList actionPrefix card >>= return . buildAction))
 
 
 notification :: GenParser Char st Notification
-notification =
-    spaces >> inParens ( do {
+notification = inParens $ do {
         word "moved" >> many1 space;
         n <- name;
         many1 space;
         p <- play;
-        return (Update n p)
-    } <|> ( word "move" >> many1 space >> state >>= return . Request ) ) <* spaces
+        return $ Update n p
+    }
+    <|> ( word "move" >> many1 space >> state >>= return . Request )
 
 
 name :: GenParser Char st String
