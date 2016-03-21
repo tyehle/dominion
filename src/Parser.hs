@@ -106,14 +106,14 @@ play = (try (prefixedList actionPrefix card >>= return . buildAction))
 
 
 notification :: GenParser Char st Notification
-notification = inParens $ do {
+notification =
+    spaces >> inParens ( do {
         word "moved" >> many1 space;
         n <- name;
         many1 space;
         p <- play;
-        return $ Update n p
-    }
-    <|> ( word "move" >> many1 space >> state >>= return . Request )
+        return (Update n p)
+    } <|> ( word "move" >> many1 space >> state >>= return . Request ) ) <* spaces
 
 
 name :: GenParser Char st String

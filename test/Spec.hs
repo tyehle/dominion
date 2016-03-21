@@ -65,7 +65,8 @@ parsing = testGroup "parser tests"
             testCase "update normal" $ parseFrom notification "(moved john (clean copper))" @?= Right (Update "john" (Clean (Just Copper))),
             testCase "update spaces" $ parseFrom notification "( moved player-2 (clean copper) )" @?= Right (Update "player-2" (Clean (Just Copper))),
             testCase "update act" $ parseFrom notification "(moved player_1 (act mine copper silver))" @?= Right (Update "player_1" (Act Mine [Copper, Silver])),
-            testCase "update moved" $ parseFrom notification "(move ((players) (supply) (trash) (actions 0) (buys 0) (coins 0) (deck) (hand) (plays) (discards)))" @?= Right (Request (GameState [] [] [] 0 0 0 [] [] [] []))
+            testCase "update move" $ parseFrom notification "(move ((players) (supply) (trash) (actions 0) (buys 0) (coins 0) (deck) (hand) (plays) (discards)))" @?= Right (Request (GameState [] [] [] 0 0 0 [] [] [] [])),
+            testCase "update spaces" $ parseFrom notification "   (moved john (clean))   asdf" @?= Right (Update "john" (Clean Nothing))
         ],
 
         testGroup "atomics"
@@ -94,6 +95,11 @@ parsing = testGroup "parser tests"
             testCase "village" $ parseFrom card "village" @?= Right Village,
             testCase "woodcutter" $ parseFrom card "woodcutter" @?= Right Woodcutter,
             testCase "workshop" $ parseFrom card "workshop" @?= Right Workshop
+        ],
+
+        testGroup "external interface"
+        [
+            testCase "with spaces" $ parseNotification "  (moved john (clean))   more" @?= (Update "john" (Clean Nothing), "more")
         ]
     ]
 
