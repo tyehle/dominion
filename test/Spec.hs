@@ -155,6 +155,28 @@ agent = testGroup "agent"
             testCase "village" $ tryBuy (mkState 0 1 4 [Smithy]) @?= Left (Buy Village),
             testCase "silver" $ tryBuy (mkState 0 1 4 [Smithy, Village]) @?= Left (Buy Silver),
             testCase "duchy" $ tryBuy (mkState 0 1 5 [Smithy, Village, Mine]) @?= Left (Buy Duchy)
+        ],
+
+        testGroup "defend"
+        [
+            testCase "reveal moat" $ defend (Act Militia []) (mkState 1 1 0 [Estate, Moat, Copper]) @?= Reveal Moat,
+            testCase "discard to 3" $ defend (Act Militia []) (mkState 1 1 0 [Estate, Copper, Copper, Mine, Silver]) @?= Discard [Estate, Copper]
+        ],
+
+        testGroup "discard to"
+        [
+            testCase "victory cards" $ discardTo 2 (mkState 1 1 0 [Estate, Duchy, Province, Copper, Gold]) @?= Discard [Province, Duchy, Estate],
+            testCase "other cards" $ discardTo 2 (mkState 1 1 0 [Silver, Silver, Copper, Village, Smithy]) @?= Discard [Copper, Village, Silver]
+        ],
+
+        testGroup "find discards"
+        [
+            testCase "done case" $ findDiscards 0 [Copper] [Copper] @?= [],
+            testCase "extra done" $ findDiscards (-1) [Copper] [Copper] @?= [],
+            testCase "none left" $ findDiscards 2 [Cellar, Moat, Workshop] [] @?= [Cellar, Moat],
+            testCase "regular" $ findDiscards 2 [Gold, Copper, Duchy] [Duchy, Copper] @?= [Duchy, Copper],
+            testCase "duplicates" $ findDiscards 3 [Gold, Duchy, Copper, Duchy] [Duchy, Copper] @?= [Duchy, Duchy, Copper],
+            testCase "too many" $ findDiscards 1 [Gold, Copper, Copper, Copper] [Copper] @?= [Copper]
         ]
     ]
 
@@ -168,16 +190,15 @@ dataTests = testGroup "data"
             testCase "clean empty" $ show (Clean Nothing) @?= "(clean)",
             testCase "clean something" $ show (Clean (Just Duchy)) @?= "(clean duchy)",
             testCase "buy" $ show (Buy Province) @?= "(buy province)",
-            testGroup "act"
-            [
-                testCase "mine" $ show (Act Mine [Silver, Gold]) @?= "(act mine silver gold)",
-                testCase "cellar" $ show (Act Cellar [Province, Mine, Duchy, Copper]) @?= "(act cellar province mine duchy copper)",
-                testCase "market" $ show (Act Market []) @?= "(act market)",
-                testCase "remodel" $ show (Act Remodel [Gold, Province]) @?= "(act remodel gold province)",
-                testCase "smithy" $ show (Act Smithy []) @?= "(act smithy)",
-                testCase "village" $ show  (Act Village []) @?= "(act village)",
-                testCase "woodcutter" $ show (Act Woodcutter []) @?= "(act woodcutter)",
-                testCase "workshop" $ show (Act Workshop [Village]) @?= "(act workshop village)"
-            ]
+            testCase "act mine" $ show (Act Mine [Silver, Gold]) @?= "(act mine silver gold)",
+            testCase "act smithy" $ show (Act Smithy []) @?= "(act smithy)"
+        ],
+
+        testGroup "defense show"
+        [
+            testCase "reveal moat" $ show (Reveal Moat) @?= "(moat)",
+            testCase "reveal estate" $ show (Reveal Estate) @?= "(estate)",
+            testCase "discard nothing" $ show (Discard []) @?= "(discard)",
+            testCase "discard cards" $ show (Discard [Copper, Estate]) @?= "(discard copper estate)"
         ]
     ]

@@ -1,7 +1,8 @@
 module Data
 (
     Notification(..), Defense(..), GameState(..), Action(..), Card(..),
-    cost, treasureWorth, victoryWorth,
+    cost,
+    treasureWorth, victoryWorth,
     isTreasure, isAction
 )
 where
@@ -17,7 +18,7 @@ data Notification = Request GameState
                   | Defended String Defense deriving (Eq, Show)
 
 
-data Defense = Reveal Card | Discard [Card] deriving (Eq, Show)
+data Defense = Reveal Card | Discard [Card] deriving (Eq)
 
 
 data GameState = GameState { players :: [String], supply :: [Card], trash :: [Card]
@@ -47,6 +48,10 @@ instance Show Action where
     show (Clean Nothing) = "(clean)"
     show (Buy c) = wrap ["buy", show c]
     show (Act c cs) = wrap $ "act" : show c : map show cs
+
+instance Show Defense where
+    show (Reveal c) = wrap [show c]
+    show (Discard cs) = wrap $ "discard":(map show cs)
 
 
 isTreasure :: Card -> Bool

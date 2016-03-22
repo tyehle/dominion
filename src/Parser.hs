@@ -30,12 +30,12 @@ parseNotification input
 
 withRemainingNoSpace :: Parser a -> Parser (a, String)
 withRemainingNoSpace p = do
-    stuff <- spaces *> p <* spaces
+    result <- spaces *> p <* spaces
     rest <- getInput
-    return (stuff, rest)
+    return (result, rest)
 
 inParens :: GenParser Char st a -> GenParser Char st a
-inParens p = between (char '(') (char ')') $ spaces *> p <* spaces
+inParens p = char '(' *> spaces *> p <* spaces <* char ')'
 
 word :: String -> GenParser Char st String
 word = try . string

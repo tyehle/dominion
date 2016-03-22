@@ -1,7 +1,8 @@
 module Agent
 (
     respond,
-    act,
+    act, defend,
+    discardTo, findDiscards,
     tryAction, tryMine,
     tryAdd,
     tryBuy
@@ -9,16 +10,42 @@ module Agent
 where
 
 import Data
-import Data.List (find)
+import Data.List (find, partition)
 
 respond :: Notification -> String
 respond (Update name action) = ""
+respond (Defended name how) = ""
+respond (Attacked how name state) = show (defend how state)
 respond (Request state) = show . act $ state
 
 act :: GameState -> Action
 act state = case tryAction state >>= tryAdd >>= tryBuy of
     Left a  -> a
     Right _ -> Clean $ find (\_ -> True) (hand state)
+
+defend :: Action -> GameState -> Defense
+defend (Act Militia []) state
+    | inHand state Moat = Reveal Moat
+    | otherwise         = discardTo 3 state
+defend _ _ = error "unexpected attack!"
+
+
+
+-- Defense --
+
+discardTo :: Int -> GameState -> Defense
+discardTo n state = Discard (findDiscards (length (hand state) - n)
+                                          (hand state)
+                                          [Province, Duchy, Estate, Copper, Mine, Village, Silver, Smithy, Gold])
+
+findDiscards :: Int -> [Card] -> [Card] -> [Card]
+findDiscards n hand toTry
+    | n <= 0     = []
+    | null toTry = take n hand
+    | otherwise  = (take n toRemove) ++ findDiscards (n - length toRemove) toKeep (tail toTry)
+    where (toRemove, toKeep) = partition (== (head toTry)) hand
+
+----
 
 
 
