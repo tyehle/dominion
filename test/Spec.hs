@@ -125,7 +125,7 @@ parsing = testGroup "parser tests"
 
 fullSuply = [Copper, Silver, Gold,
              Estate, Duchy, Province,
-             Mine, Cellar, Market, Remodel, Smithy, Village, Woodcutter, Workshop]
+             Mine, Cellar, Market, Remodel, Smithy, Village, Woodcutter, Workshop, Moat, Militia]
 
 mkState actions buys coins cards = GameState ["me", "other"] fullSuply [] actions buys coins [] cards [] []
 
@@ -152,10 +152,12 @@ agent = testGroup "agent"
             testCase "province" $ tryBuy (mkState 0 1 8 []) @?= Left (Buy Province),
             testCase "gold" $ tryBuy (mkState 0 1 6 []) @?= Left (Buy Gold),
             testCase "mine" $ tryBuy (mkState 0 1 5 [Copper]) @?= Left (Buy Mine),
-            testCase "smithy" $ tryBuy (mkState 0 1 4 [Copper]) @?= Left (Buy Smithy),
-            testCase "village" $ tryBuy (mkState 0 1 4 [Smithy]) @?= Left (Buy Village),
-            testCase "silver" $ tryBuy (mkState 0 1 4 [Smithy, Village]) @?= Left (Buy Silver),
-            testCase "duchy" $ tryBuy (mkState 0 1 5 [Smithy, Village, Mine]) @?= Left (Buy Duchy)
+            testCase "militia" $ tryBuy (mkState 0 1 4 [Copper]) @?= Left (Buy Militia),
+            testCase "militia fail" $ tryBuy (mkState 0 1 4 [Militia]) @?= Left (Buy Smithy),
+            testCase "smithy" $ tryBuy (mkState 0 1 4 [Copper, Militia]) @?= Left (Buy Smithy),
+            testCase "village" $ tryBuy (mkState 0 1 4 [Smithy, Militia]) @?= Left (Buy Village),
+            testCase "silver" $ tryBuy (mkState 0 1 4 [Smithy, Village, Militia]) @?= Left (Buy Silver),
+            testCase "duchy" $ tryBuy (mkState 0 1 5 [Smithy, Village, Mine, Militia]) @?= Left (Buy Duchy)
         ],
 
         testGroup "defend"

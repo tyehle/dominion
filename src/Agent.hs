@@ -99,12 +99,13 @@ tryBuy state
         Nothing -> Right state
     | otherwise = Right state
     where   canBuy c = cost c <= coins state && c `elem` supply state
-            cardPriority = [Province, Gold, Mine, Smithy, Village, Duchy, Silver, Copper]
+            cardPriority = [Province, Gold, Mine, Militia, Smithy, Village, Duchy, Silver, Copper]
 
 shouldBuy :: GameState -> Card -> Bool
 shouldBuy _ Province = True
-shouldBuy state Mine = deckPDraw (allMyCards state) Mine  < 0.15
 shouldBuy _ Gold = True
+shouldBuy state Mine = deckPDraw (allMyCards state) Mine  < 0.15
+shouldBuy state Militia = length (filter (== Militia) (allMyCards state)) < 1
 shouldBuy state Smithy = deckPDraw (allMyCards state) Smithy < 0.08
 shouldBuy state Village = deckPDraw (allMyCards state) Village < 0.1
 shouldBuy _ Duchy = True
