@@ -20,7 +20,8 @@ parseNotification :: String -> (Notification, String)
 parseNotification input
     | Left e       <- parsed = error . show $ e
     | Right result <- parsed = result
-    where parsed = parse (withRemaining notification) "stdin" input
+    where
+        parsed = parse (withRemaining notification) "stdin" input
 
 ----
 
@@ -45,7 +46,8 @@ labeledList label items = prefixedList (word label) items >>= \(_, list) -> retu
 
 prefixedList :: GenParser Char st p -> GenParser Char st a -> GenParser Char st (p, [a])
 prefixedList label items = inParens $ label >>= \pre -> itemList >>= return . (,) pre
-    where itemList = try (many1 space >> sepEndBy items (many1 space)) <|> return []
+    where
+        itemList = try (many1 space >> sepEndBy items (many1 space)) <|> return []
 
 ----
 
@@ -103,8 +105,9 @@ play =  (try (prefixedList actionPrefix card >>= return . buildAction))
     <|> (inParens $ ( word "add" >> many1 space >> treasure >>= return . Add )
                 <|> ( word "buy" >> many1 space >> card >>= return . Buy )
                 <|> ( word "clean" >> optionMaybe (many1 space >> card) >>= return . Clean ))
-    where   actionPrefix = word "act" >> many1 space >> action
-            buildAction (played, cards) = Act played cards
+    where
+        actionPrefix = word "act" >> many1 space >> action
+        buildAction (played, cards) = Act played cards
 
 
 notification :: GenParser Char st Notification

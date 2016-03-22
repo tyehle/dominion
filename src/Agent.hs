@@ -43,7 +43,8 @@ findDiscards n hand toTry
     | n <= 0     = []
     | null toTry = take n hand
     | otherwise  = (take n toRemove) ++ findDiscards (n - length toRemove) toKeep (tail toTry)
-    where (toRemove, toKeep) = partition (== (head toTry)) hand
+    where
+        (toRemove, toKeep) = partition (== (head toTry)) hand
 
 ----
 
@@ -98,8 +99,9 @@ tryBuy state
         Just c -> Left $ Buy c
         Nothing -> Right state
     | otherwise = Right state
-    where   canBuy c = cost c <= coins state && c `elem` supply state
-            cardPriority = [Province, Gold, Mine, Militia, Smithy, Village, Duchy, Silver, Copper]
+    where
+        canBuy c = cost c <= coins state && c `elem` supply state
+        cardPriority = [Province, Gold, Mine, Militia, Smithy, Village, Duchy, Silver, Copper]
 
 shouldBuy :: GameState -> Card -> Bool
 shouldBuy _ Province = True
@@ -125,8 +127,9 @@ allMyCards state = concat $ map ($ state) [deck, hand, plays, discards]
 -- Computes the probability of drawing a single card from a list of cards
 deckPDraw :: [Card] -> Card -> Double
 deckPDraw allCards card = count / total
-    where count = fromIntegral . length . filter (== card) $ allCards
-          total = fromIntegral . length $ allCards
+    where
+        count = fromIntegral . length . filter (== card) $ allCards
+        total = fromIntegral . length $ allCards
 
 expectedTreasure :: (Fractional a) => [Card] -> a
 expectedTreasure deck = (sum (map treasureWorth deck)) / (fromIntegral (length deck))
