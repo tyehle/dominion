@@ -3,6 +3,7 @@ module Main where
 import Parser (parseNotification)
 import Agent (respond)
 
+import Data.Char (isSpace)
 import System.IO
 
 
@@ -14,6 +15,9 @@ main = do
 
 
 runClient :: String -> IO ()
-runClient "" = return ()
-runClient input = (putStr . respond) notification >> runClient moreInput
-    where (notification, moreInput) = parseNotification input
+runClient input
+    | null trimmed = return ()
+    | otherwise    = (putStr . respond) notification >> runClient moreInput
+    where
+        trimmed = dropWhile isSpace input
+        (notification, moreInput) = parseNotification trimmed

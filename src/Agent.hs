@@ -52,17 +52,11 @@ findDiscards n hand toTry
 -- Actions --
 
 tryAction :: GameState -> Either Action GameState
-tryAction state = tryVillage state >>= trySmithy >>= tryMine
+tryAction state = trySimplePlay Village state >>= trySimplePlay Militia >>= trySimplePlay Smithy >>= tryMine
 
-
-tryVillage :: GameState -> Either Action GameState
-tryVillage state
-    | canPlay state Village = Left $ Act Village []
-    | otherwise = Right state
-
-trySmithy :: GameState -> Either Action GameState
-trySmithy state
-    | canPlay state Smithy = Left $ Act Smithy []
+trySimplePlay :: Card -> GameState -> Either Action GameState
+trySimplePlay card state
+    | canPlay state card = Left $ Act card []
     | otherwise = Right state
 
 tryMine :: GameState -> Either Action GameState

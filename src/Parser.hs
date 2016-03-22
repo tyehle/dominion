@@ -20,7 +20,7 @@ parseNotification :: String -> (Notification, String)
 parseNotification input
     | Left e       <- parsed = error . show $ e
     | Right result <- parsed = result
-    where parsed = parse (withRemainingNoSpace notification) "stdin" input
+    where parsed = parse (withRemaining notification) "stdin" input
 
 ----
 
@@ -28,9 +28,9 @@ parseNotification input
 
 -- convenience functions
 
-withRemainingNoSpace :: Parser a -> Parser (a, String)
-withRemainingNoSpace p = do
-    result <- spaces *> p <* spaces
+withRemaining :: Parser a -> Parser (a, String)
+withRemaining p = do
+    result <- p
     rest <- getInput
     return (result, rest)
 

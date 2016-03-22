@@ -116,7 +116,8 @@ parsing = testGroup "parser tests"
 
         testGroup "external interface"
         [
-            testCase "with spaces" $ parseNotification "  (moved john (clean))   more" @?= (Update "john" (Clean Nothing), "more")
+            testCase "with spaces" $ parseNotification "( moved john (clean) )   more" @?= (Update "john" (Clean Nothing), "   more"),
+            testCase "no spaces" $ parseNotification "(moved john (clean))()" @?= (Update "john" (Clean Nothing), "()")
         ]
     ]
 
