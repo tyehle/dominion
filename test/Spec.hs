@@ -1,4 +1,3 @@
-
 import Parser
 import Data
 import Agent
@@ -6,9 +5,11 @@ import Agent
 import Test.Tasty
 import Test.Tasty.HUnit
 
+import MinerSpec (minerTests)
+
 main = defaultMain tests
 
-tests = testGroup "all tests" [parsing, agent, dataTests]
+tests = testGroup "all tests" [parsing, agent, dataTests, minerTests]
 
 
 stateString = "( (players player_1 player-2) (supply copper copper estate province) (trash silver mine)\
@@ -132,46 +133,6 @@ mkState actions buys coins cards = GameState ["me", "other"] fullSuply [] action
 
 agent = testGroup "agent"
     [
-        testGroup "act"
-        [
-            testCase "mine" $ tryAction (mkState 1 1 0 [Mine, Copper]) @?= Left (Act Mine [Copper, Silver]),
-            testCase "village" $ tryAction (mkState 1 1 0 [Mine, Smithy, Village, Copper]) @?= Left (Act Village []),
-            testCase "smithy" $ tryAction (mkState 1 1 0 [Mine, Smithy, Copper]) @?= Left (Act Smithy [])
-        ],
-
-        testGroup "add"
-        [
-            testCase "copper" $ tryAdd (mkState 0 1 0 [Copper]) @?= Left (Add Copper),
-            testCase "silver" $ tryAdd (mkState 0 1 0 [Silver]) @?= Left (Add Silver),
-            testCase "gold" $ tryAdd (mkState 0 1 0 [Gold]) @?= Left (Add Gold),
-            testCase "failure" $ tryAdd (mkState 0 1 0 []) @?= Right (mkState 0 1 0 [])
-        ],
-
-        testGroup "buy"
-        [
-            testCase "province" $ tryBuy (mkState 0 1 8 []) @?= Left (Buy Province),
-            testCase "gold" $ tryBuy (mkState 0 1 6 []) @?= Left (Buy Gold),
-            testCase "mine" $ tryBuy (mkState 0 1 5 [Copper]) @?= Left (Buy Mine),
-            testCase "militia" $ tryBuy (mkState 0 1 4 [Copper]) @?= Left (Buy Militia),
-            testCase "militia fail" $ tryBuy (mkState 0 1 4 [Militia]) @?= Left (Buy Smithy),
-            testCase "smithy" $ tryBuy (mkState 0 1 4 [Copper, Militia]) @?= Left (Buy Smithy),
-            testCase "village" $ tryBuy (mkState 0 1 4 [Smithy, Militia]) @?= Left (Buy Village),
-            testCase "silver" $ tryBuy (mkState 0 1 4 [Smithy, Village, Militia]) @?= Left (Buy Silver),
-            testCase "duchy" $ tryBuy (mkState 0 1 5 [Smithy, Village, Mine, Militia]) @?= Left (Buy Duchy)
-        ],
-
-        testGroup "defend"
-        [
-            testCase "reveal moat" $ defend (Act Militia []) (mkState 1 1 0 [Estate, Moat, Copper]) @?= Reveal Moat,
-            testCase "discard to 3" $ defend (Act Militia []) (mkState 1 1 0 [Estate, Copper, Copper, Mine, Silver]) @?= Discard [Estate, Copper]
-        ],
-
-        testGroup "discard to"
-        [
-            testCase "victory cards" $ discardTo 2 (mkState 1 1 0 [Estate, Duchy, Province, Copper, Gold]) @?= Discard [Province, Duchy, Estate],
-            testCase "other cards" $ discardTo 2 (mkState 1 1 0 [Silver, Silver, Copper, Village, Smithy]) @?= Discard [Copper, Village, Silver]
-        ],
-
         testGroup "find discards"
         [
             testCase "done case" $ findDiscards 0 [Copper] [Copper] @?= [],

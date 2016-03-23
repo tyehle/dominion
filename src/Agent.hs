@@ -1,42 +1,60 @@
 module Agent
 (
+    Agent,
     respond,
     act, defend,
-    discardTo, findDiscards,
-    tryAction, tryMine,
-    tryAdd,
-    tryBuy
+    tryAction, tryAdd, tryBuy,
+    tryDefend, discardTo,
+    revealMoat, discardFixedPriority, findDiscards,
+    trySimplePlay, tryMine, inHand, canAct, canAdd,
+    playAllTreasures,
+    buyPriority,
+    allMyCards, probDraw, expectedTreasure
 )
 where
 
 import Data
 import Data.List (find, partition)
 
-respond :: Notification -> String
-respond (Update name action) = ""
-respond (Defended name how) = ""
-respond (Attacked how name state) = show (defend how state)
-respond (Request state) = show . act $ state
 
-act :: GameState -> Action
-act state = case tryAction state >>= tryAdd >>= tryBuy of
-    Left a  -> a
-    Right _ -> Clean $ find (\_ -> True) (hand state)
+class Agent a where
+    respond :: a -> Notification -> String
+    respond _ (Update name action) = ""
+    respond _ (Defended name how) = ""
+    respond a (Attacked how name state) = show (defend a how state)
+    respond a (Request state) = show (act a state)
 
-defend :: Action -> GameState -> Defense
-defend (Act Militia []) state
-    | inHand state Moat = Reveal Moat
-    | otherwise         = discardTo 3 state
-defend _ _ = error "unexpected attack!"
+    act :: a -> GameState -> Action
+    act a state = case tryAction a state >>= tryAdd a >>= tryBuy a of
+        Left action  -> action
+        Right _      -> Clean $ find (\_ -> True) (hand state)
+
+    defend :: a -> Action -> GameState -> Defense
+    defend a (Act Militia []) state = fallback (tryDefend a state)
+        where
+            fallback (Left defense) = defense
+            fallback (Right state) = discardTo a 3 state
+    defend _ bad _ = error ("unexpected attack: " ++ (show bad))
+
+    tryAction :: a -> GameState -> Either Action GameState
+    tryAdd :: a -> GameState -> Either Action GameState
+    tryBuy :: a -> GameState -> Either Action GameState
+    tryDefend :: a -> GameState -> Either Defense GameState
+    discardTo :: a -> Int -> GameState -> Defense
 
 
 
 -- Defense --
 
-discardTo :: Int -> GameState -> Defense
-discardTo n state = Discard (findDiscards (length (hand state) - n)
-                                          (hand state)
-                                          [Province, Duchy, Estate, Copper, Mine, Village, Silver, Smithy, Gold])
+revealMoat :: GameState -> Either Defense GameState
+revealMoat state
+    | inHand state Moat = Left $ Reveal Moat
+    | otherwise = Right state
+
+discardFixedPriority :: [Card] -> Int -> GameState -> Defense
+discardFixedPriority priority n state = Discard (findDiscards (length (hand state) - n)
+                                                              (hand state)
+                                                              priority)
 
 findDiscards :: Int -> [Card] -> [Card] -> [Card]
 findDiscards n hand toTry
@@ -52,26 +70,23 @@ findDiscards n hand toTry
 
 -- Actions --
 
-tryAction :: GameState -> Either Action GameState
-tryAction state = trySimplePlay Village state >>= trySimplePlay Militia >>= trySimplePlay Smithy >>= tryMine
-
 trySimplePlay :: Card -> GameState -> Either Action GameState
 trySimplePlay card state
-    | canPlay state card = Left $ Act card []
+    | canAct state card = Left $ Act card []
     | otherwise = Right state
 
 tryMine :: GameState -> Either Action GameState
 tryMine state
-    | canPlay state Mine && inHand state Silver && canAdd state Gold   = Left $ Act Mine [Silver, Gold]
-    | canPlay state Mine && inHand state Copper && canAdd state Silver = Left $ Act Mine [Copper, Silver]
+    | canAct state Mine && inHand state Silver && canAdd state Gold   = Left $ Act Mine [Silver, Gold]
+    | canAct state Mine && inHand state Copper && canAdd state Silver = Left $ Act Mine [Copper, Silver]
     | otherwise = Right state
 
 
 inHand :: GameState -> Card -> Bool
 inHand state card = card `elem` hand state
 
-canPlay :: GameState -> Card -> Bool
-canPlay state card = actions state > 0 && inHand state card
+canAct :: GameState -> Card -> Bool
+canAct state card = actions state > 0 && inHand state card
 
 canAdd :: GameState -> Card -> Bool
 canAdd state card = card `elem` supply state
@@ -82,8 +97,8 @@ canAdd state card = card `elem` supply state
 
 -- Adding Treasures --
 
-tryAdd :: GameState -> Either Action GameState
-tryAdd state = case find isTreasure (hand state) of
+playAllTreasures :: GameState -> Either Action GameState
+playAllTreasures state = case find isTreasure (hand state) of
     Just t -> Left $ Add t
     _ -> Right state
 
@@ -93,26 +108,14 @@ tryAdd state = case find isTreasure (hand state) of
 
 -- Buying --
 
-tryBuy :: GameState -> Either Action GameState
-tryBuy state
-    | buys state > 0 = case find (\c -> canBuy c && shouldBuy state c) cardPriority of
-        Just c -> Left $ Buy c
+buyPriority :: (GameState -> Card -> Bool) -> [Card] -> GameState -> Either Action GameState
+buyPriority should priority state
+    | buys state > 0 = case find (\c -> canBuy c && should state c) priority of
+        Just c -> Left (Buy c)
         Nothing -> Right state
     | otherwise = Right state
     where
         canBuy c = cost c <= coins state && c `elem` supply state
-        cardPriority = [Province, Gold, Mine, Militia, Smithy, Village, Duchy, Silver, Copper]
-
-shouldBuy :: GameState -> Card -> Bool
-shouldBuy _ Province = True
-shouldBuy _ Gold = True
-shouldBuy state Mine = deckPDraw (allMyCards state) Mine  < 0.15
-shouldBuy state Militia = length (filter (== Militia) (allMyCards state)) < 1
-shouldBuy state Smithy = deckPDraw (allMyCards state) Smithy < 0.08
-shouldBuy state Village = deckPDraw (allMyCards state) Village < 0.1
-shouldBuy _ Duchy = True
-shouldBuy _ Silver = True
-shouldBuy _ Copper = False
 
 ----
 
@@ -125,8 +128,8 @@ allMyCards :: GameState -> [Card]
 allMyCards state = concat $ map ($ state) [deck, hand, plays, discards]
 
 -- Computes the probability of drawing a single card from a list of cards
-deckPDraw :: [Card] -> Card -> Double
-deckPDraw allCards card = count / total
+probDraw :: [Card] -> Card -> Double
+probDraw allCards card = count / total
     where
         count = fromIntegral . length . filter (== card) $ allCards
         total = fromIntegral . length $ allCards
