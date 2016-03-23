@@ -1,0 +1,5 @@
+#!/bin/bash
+
+dir=$(dirname $BASH_SOURCE[0])
+
+racket "$dir/text-driver.rkt" "$dir/miner" "$dir/player-v1" "$dir/player-v2-random"
