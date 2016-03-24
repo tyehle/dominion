@@ -57,7 +57,7 @@ minerTests = testGroup "miner 49er"
 
         testGroup "discard to"
         [
-            testCase "victory cards" $ discardTo agent 2 (mkState 1 1 0 [Estate, Duchy, Province, Copper, Gold]) @?= Discard [Province, Duchy, Estate],
-            testCase "other cards" $ discardTo agent 2 (mkState 1 1 0 [Silver, Silver, Copper, Village, Smithy]) @?= Discard [Copper, Village, Silver]
+            testCase "victory cards" $ discardTo agent (mkState 1 1 0 [Estate, Duchy, Province, Copper, Gold]) 2 @?= Discard [Province, Duchy, Estate],
+            testCase "other cards" $ discardTo agent (mkState 1 1 0 [Silver, Silver, Copper, Village, Smithy]) 2 @?= Discard [Copper, Village, Silver]
         ]
     ]

@@ -1,6 +1,6 @@
 module AgentInstances
 (
-    Miner49er(..), Passive(..),
+    Miner49er(..), Passive(..), SmithyMoney(..),
     drive, runClient
 )
 where
@@ -9,10 +9,12 @@ import Parser (parseNotification)
 import Data
 import Agent
 
+import Data.List (sortOn)
 import Data.Char (isSpace)
 import System.IO
 
 
+-- Functions for running an agent --
 
 drive :: (Agent a) => a -> IO ()
 drive agent = do
@@ -28,6 +30,11 @@ runClient agent input
     where
         trimmed = dropWhile isSpace input
         (notification, moreInput) = parseNotification trimmed
+
+----
+
+
+
 
 
 data Miner49er = Miner49er
@@ -53,7 +60,10 @@ instance Agent Miner49er where
 
     tryDefend _ = revealMoat
 
-    discardTo _ = discardFixedPriority [Province, Duchy, Estate, Copper, Mine, Village, Silver, Smithy, Gold]
+    discardTo _ = discardPriority [Province, Duchy, Estate, Copper, Mine, Village, Silver, Smithy, Gold]
+
+
+
 
 
 data Passive = Passive
@@ -63,4 +73,33 @@ instance Agent Passive where
     tryAdd _ state = Right state
     tryBuy _ state = Right state
     tryDefend _ state = Right state
-    discardTo _ = discardFixedPriority []
+    discardTo _ = discardPriority []
+
+
+
+
+
+data SmithyMoney = SmithyMoney
+
+instance Agent SmithyMoney where
+    tryAction _ = trySimplePlay Smithy
+
+    tryAdd _ = playAllTreasures
+
+    tryBuy _ = buyPriority shouldBuy priority
+        where
+            priority = [Province, Gold, Smithy, Duchy, Silver, Estate]
+            shouldBuy _ Province = True
+            shouldBuy state Gold = numInSupply state Province > 4
+            shouldBuy state Smithy = probDraw (allMyCards state) Smithy < 0.05
+            shouldBuy state Duchy = numInSupply state Province < 6
+            shouldBuy _ Silver = True
+            shouldBuy state Estate = numInSupply state Province < 4
+
+    tryDefend _ = revealMoat
+
+    discardTo _ state = discardPriority ([Province, Duchy, Estate] ++ valueSorted) state
+        where
+            valueSorted = sortOn value [Copper, Silver, Gold, Smithy]
+            value Smithy = expectedDrawValue state 3
+            value t = treasureWorth t

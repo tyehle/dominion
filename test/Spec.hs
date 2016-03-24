@@ -6,10 +6,11 @@ import Test.Tasty
 import Test.Tasty.HUnit
 
 import MinerSpec (minerTests)
+import SmithySpec (smithyTests)
 
 main = defaultMain tests
 
-tests = testGroup "all tests" [parsing, agent, dataTests, minerTests]
+tests = testGroup "all tests" [parsing, agent, dataTests, minerTests, smithyTests]
 
 
 stateString = "( (players player_1 player-2) (supply copper copper estate province) (trash silver mine)\
@@ -129,6 +130,7 @@ fullSuply = [Copper, Silver, Gold,
              Mine, Cellar, Market, Remodel, Smithy, Village, Woodcutter, Workshop, Moat, Militia]
 
 mkState actions buys coins cards = GameState ["me", "other"] fullSuply [] actions buys coins [] cards [] []
+mkDeckDiscard deck discards = GameState ["me", "other"] fullSuply [] 1 1 0 deck [] [] discards
 
 
 agent = testGroup "agent"
@@ -141,7 +143,15 @@ agent = testGroup "agent"
             testCase "regular" $ findDiscards 2 [Gold, Copper, Duchy] [Duchy, Copper] @?= [Duchy, Copper],
             testCase "duplicates" $ findDiscards 3 [Gold, Duchy, Copper, Duchy] [Duchy, Copper] @?= [Duchy, Duchy, Copper],
             testCase "too many" $ findDiscards 1 [Gold, Copper, Copper, Copper] [Copper] @?= [Copper]
-        ]
+        ],
+
+        testGroup "expected draw value"
+        [
+            testCase "deck draw" $ expectedDrawValue (mkDeckDiscard [Copper, Silver, Estate] []) 2 @?= 2,
+            testCase "discard draw" $ expectedDrawValue (mkDeckDiscard [Estate, Silver] [Copper, Silver]) 3 @?= 3.5
+        ],
+
+        testCase "num in supply" $ numInSupply (mkState 1 1 0 []) Province @?= 1
     ]
 
 
