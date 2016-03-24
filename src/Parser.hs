@@ -56,22 +56,21 @@ prefixedList label items = inParens $ label >>= \pre -> itemList >>= return . (,
 -- The actual grammar
 
 state :: GenParser Char st GameState
-state = inParens $ do {
-        players <- many space >> labeledList "players" name;
-        supply  <- many1 space >> labeledList "supply" card;
-        trash   <- many1 space >> labeledList "trash"  card;
+state = inParens $ do
+            players <- many space >> labeledList "players" name;
+            supply  <- many1 space >> labeledList "supply" card;
+            trash   <- many1 space >> labeledList "trash"  card;
 
-        actions <- many1 space >> inParens ( word "actions" >> many1 space >> number );
-        buys    <- many1 space >> inParens ( word "buys"    >> many1 space >> number );
-        coins   <- many1 space >> inParens ( word "coins"   >> many1 space >> number );
+            actions <- many1 space >> inParens ( word "actions" >> many1 space >> number );
+            buys    <- many1 space >> inParens ( word "buys"    >> many1 space >> number );
+            coins   <- many1 space >> inParens ( word "coins"   >> many1 space >> number );
 
-        deck     <- many1 space >> labeledList "deck"     card;
-        hand     <- many1 space >> labeledList "hand"     card;
-        plays    <- many1 space >> labeledList "plays"    card;
-        discards <- many1 space >> labeledList "discards" card;
+            deck     <- many1 space >> labeledList "deck"     card;
+            hand     <- many1 space >> labeledList "hand"     card;
+            plays    <- many1 space >> labeledList "plays"    card;
+            discards <- many1 space >> labeledList "discards" card;
 
-        return $ GameState players supply trash actions buys coins deck hand plays discards
-    }
+            return $ GameState players supply trash actions buys coins deck hand plays discards
 
 
 card :: GenParser Char st Card
@@ -113,32 +112,26 @@ play =  (try (prefixedList actionPrefix card >>= return . buildAction))
 notification :: GenParser Char st Notification
 notification = inParens $ update <|> request <|> attacked <|> defended
 
-update =
-    do {
-        word "moved" >> many1 space;
-        n <- name <* many1 space;
-        p <- play;
-        return $ Update n p
-    }
+update = do
+    word "moved" >> many1 space;
+    n <- name <* many1 space;
+    p <- play;
+    return $ Update n p
 
 request = word "move" >> many1 space >> state >>= return . Request
 
-attacked =
-    do {
-        word "attacked" >> many1 space;
-        act <- play <* many1 space;
-        n <- name <* many1 space;
-        s <- state;
-        return $ Attacked act n s
-    }
+attacked = do
+    word "attacked" >> many1 space;
+    act <- play <* many1 space;
+    n <- name <* many1 space;
+    s <- state;
+    return $ Attacked act n s
 
-defended =
-    do {
-        word "defended" >> many1 space;
-        n <- name <* many1 space;
-        d <- defense;
-        return $ Defended n d
-    }
+defended = do
+    word "defended" >> many1 space;
+    n <- name <* many1 space;
+    d <- defense;
+    return $ Defended n d
 
 defense :: GenParser Char st Defense
 defense =  try ( inParens card >>= return . Reveal )
