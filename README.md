@@ -1,6 +1,6 @@
 # Dominion
 
-This is a dominion AI in Haskell written for a class
+This is a Dominion AI in Haskell written for a class. I have [posted](http://tobin.yehle.io/articles/dominion) a detailed description of how it works on my website.
 
 ## Build
 
