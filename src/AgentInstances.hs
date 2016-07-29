@@ -26,7 +26,8 @@ drive agent = do
 runClient :: (Agent a) => a -> String -> IO ()
 runClient agent input
     | null trimmed = return ()
-    | otherwise    = (putStr . respond agent) notification >> runClient agent moreInput
+    | otherwise    = (putStr . respond agent) notification
+                     >> runClient agent moreInput
     where
         trimmed = dropWhile isSpace input
         (notification, moreInput) = parseNotification trimmed

@@ -18,30 +18,29 @@ import Data.List (find, partition)
 
 
 class Agent a where
-    respond :: a -> Notification -> String
-    respond _ (Update name action) = ""
-    respond _ (Defended name how) = ""
-    respond a (Attacked how name state) = show (defend a how state)
-    respond a (Request state) = show (act a state)
-
-    act :: a -> GameState -> Action
-    act a state = case tryAction a state >>= tryAdd a >>= tryBuy a of
-        Left action  -> action
-        Right _      -> Clean $ find (\_ -> True) (hand state)
-
-    defend :: a -> Action -> GameState -> Defense
-    defend a (Act Militia []) state = fallback (tryDefend a state)
-        where
-            fallback (Left defense) = defense
-            fallback (Right state) = discardTo a state 3
-    defend _ bad _ = error ("unexpected attack: " ++ (show bad))
-
     tryAction :: a -> GameState -> Either Action GameState
     tryAdd :: a -> GameState -> Either Action GameState
     tryBuy :: a -> GameState -> Either Action GameState
     tryDefend :: a -> GameState -> Either Defense GameState
     discardTo :: a -> GameState -> Int -> Defense
 
+respond :: (Agent a) => a -> Notification -> String
+respond _ (Update name action) = ""
+respond _ (Defended name how) = ""
+respond a (Attacked how name state) = show (defend a how state)
+respond a (Request state) = show (act a state)
+
+act :: (Agent a) => a -> GameState -> Action
+act a state = case tryAction a state >>= tryAdd a >>= tryBuy a of
+    Left action  -> action
+    Right _      -> Clean $ find (\_ -> True) (hand state)
+
+defend :: (Agent a) => a -> Action -> GameState -> Defense
+defend a (Act Militia []) state = fallback (tryDefend a state)
+    where
+        fallback (Left defense) = defense
+        fallback (Right state) = discardTo a state 3
+defend _ bad _ = error ("unexpected attack: " ++ (show bad))
 
 
 -- Defense --
