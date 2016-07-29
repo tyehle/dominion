@@ -94,7 +94,7 @@ instance Agent SmithyMoney where
             shouldBuy state Gold = numInSupply state Province > 4
             shouldBuy state Smithy = probDraw (allMyCards state) Smithy < 0.05
             shouldBuy state Duchy = numInSupply state Province < 6
-            shouldBuy _ Silver = True
+            shouldBuy state Silver = numInSupply state Province > 4
             shouldBuy state Estate = numInSupply state Province < 4
 
     tryDefend _ = revealMoat

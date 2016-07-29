@@ -33,7 +33,7 @@ respond a (Request state) = show (act a state)
 act :: (Agent a) => a -> GameState -> Action
 act a state = case tryAction a state >>= tryAdd a >>= tryBuy a of
     Left action  -> action
-    Right _      -> Clean $ find (\_ -> True) (hand state)
+    Right _      -> Clean $ find (const True) (hand state)
 
 defend :: (Agent a) => a -> Action -> GameState -> Defense
 defend a (Act Militia []) state = fallback (tryDefend a state)

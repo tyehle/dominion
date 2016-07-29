@@ -1,6 +1,6 @@
 # Dominion
 
-This is a terrible dominion AI in haskell written for a class
+This is a dominion AI in Haskell written for a class
 
 ## Build
 
