@@ -1,10 +1,8 @@
 module Parser
-(
-    parseFrom, labeledList,
-    parseNotification,
-    state, card, treasure, victory, action, play, notification, defense, name, number
-)
-where
+  ( parseFrom, labeledList
+  , parseNotification
+  , state, card, treasure, victory, action, play, notification, defense, name, number
+  ) where
 
 import Data
 
@@ -14,7 +12,7 @@ import Text.ParserCombinators.Parsec
 -- parser interface
 
 parseFrom :: GenParser Char () a -> String -> Either ParseError a
-parseFrom rule input = parse rule "function-argument" input
+parseFrom rule = parse rule "function-argument"
 
 parseNotification :: String -> (Notification, String)
 parseNotification input
@@ -45,9 +43,12 @@ labeledList :: String -> GenParser Char st a -> GenParser Char st [a]
 labeledList label items = prefixedList (word label) items >>= \(_, list) -> return list
 
 prefixedList :: GenParser Char st p -> GenParser Char st a -> GenParser Char st (p, [a])
-prefixedList label items = inParens $ label >>= \pre -> itemList >>= return . (,) pre
-    where
-        itemList = try (many1 space >> sepEndBy items (many1 space)) <|> return []
+prefixedList label items = inParens $ do
+  pre <- label
+  items <- itemList
+  return (pre, items)
+  where
+    itemList = try (many1 space >> sepEndBy items (many1 space)) <|> return []
 
 ----
 
@@ -100,10 +101,10 @@ action = (word "mine" >> return Mine)
 
 
 play :: GenParser Char st Action
-play =  (try (prefixedList actionPrefix card >>= return . buildAction))
-    <|> (inParens $ ( word "add" >> many1 space >> treasure >>= return . Add )
-                <|> ( word "buy" >> many1 space >> card >>= return . Buy )
-                <|> ( word "clean" >> optionMaybe (many1 space >> card) >>= return . Clean ))
+play =  try (buildAction <$> prefixedList actionPrefix card)
+    <|> inParens ((Add <$> (word "add" >> many1 space >> treasure))
+              <|> (Buy <$> (word "buy" >> many1 space >> card))
+              <|> (Clean <$> (word "clean" >> optionMaybe (many1 space >> card))))
     where
         actionPrefix = word "act" >> many1 space >> action
         buildAction (played, cards) = Act played cards
@@ -118,7 +119,7 @@ update = do
     p <- play;
     return $ Update n p
 
-request = word "move" >> many1 space >> state >>= return . Request
+request = Request <$> (word "move" >> many1 space >> state)
 
 attacked = do
     word "attacked" >> many1 space;
@@ -134,12 +135,12 @@ defended = do
     return $ Defended n d
 
 defense :: GenParser Char st Defense
-defense =  try ( inParens card >>= return . Reveal )
-       <|> ( labeledList "discard" card >>= return . Discard )
+defense =  try ( Reveal <$> inParens card )
+       <|> ( Discard <$> labeledList "discard" card )
 
 
 name :: GenParser Char st String
 name = many1 (oneOf (['0'..'9'] ++ ['a'..'z'] ++ ['A'..'Z'] ++ "-_"))
 
 number :: GenParser Char st Int
-number = many1 digit >>= return . read
+number = read <$> many1 digit

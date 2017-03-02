@@ -1,17 +1,15 @@
 module Agent
-(
-    Agent,
-    respond,
-    act, defend,
-    tryAction, tryAdd, tryBuy,
-    tryDefend, discardTo,
-    revealMoat, discardPriority, findDiscards,
-    trySimplePlay, tryMine, inHand, canAct, canAdd,
-    playAllTreasures,
-    buyPriority,
-    allMyCards, probDraw, expectedTreasure, expectedDrawValue, numInSupply
-)
-where
+  ( Agent
+  , respond
+  , act, defend
+  , tryAction, tryAdd, tryBuy
+  , tryDefend, discardTo
+  , revealMoat, discardPriority, findDiscards
+  , trySimplePlay, tryMine, inHand, canAct, canAdd
+  , playAllTreasures
+  , buyPriority
+  , allMyCards, probDraw, expectedTreasure, expectedDrawValue, numInSupply
+  ) where
 
 import Data
 import Data.List (find, partition)
@@ -40,7 +38,7 @@ defend a (Act Militia []) state = fallback (tryDefend a state)
     where
         fallback (Left defense) = defense
         fallback (Right state) = discardTo a state 3
-defend _ bad _ = error ("unexpected attack: " ++ (show bad))
+defend _ bad _ = error $ "unexpected attack: " ++ show bad
 
 
 -- Defense --
@@ -59,9 +57,9 @@ findDiscards :: Int -> [Card] -> [Card] -> [Card]
 findDiscards n hand toTry
     | n <= 0     = []
     | null toTry = take n hand
-    | otherwise  = (take n toRemove) ++ findDiscards (n - length toRemove) toKeep (tail toTry)
+    | otherwise  = take n toRemove ++ findDiscards (n - length toRemove) toKeep (tail toTry)
     where
-        (toRemove, toKeep) = partition (== (head toTry)) hand
+        (toRemove, toKeep) = partition (== head toTry) hand
 
 ----
 
@@ -124,7 +122,7 @@ buyPriority should priority state
 
 -- Gets all of the current players cards given a game state
 allMyCards :: GameState -> [Card]
-allMyCards state = concat $ map ($ state) [deck, hand, plays, discards]
+allMyCards state = concatMap ($ state) [deck, hand, plays, discards]
 
 -- Computes the probability of drawing a single card from a list of cards
 probDraw :: [Card] -> Card -> Double
@@ -134,11 +132,11 @@ probDraw allCards card = count / total
         total = fromIntegral . length $ allCards
 
 expectedTreasure :: (Fractional a) => [Card] -> a
-expectedTreasure deck = (sum (map treasureWorth deck)) / (fromIntegral (length deck))
+expectedTreasure deck = sum (map treasureWorth deck) / fromIntegral (length deck)
 
 expectedDrawValue :: (Fractional a) => GameState -> Int -> a
 expectedDrawValue state n
-    | n <= length (deck state) = (expectedTreasure (deck state)) * (fromIntegral n)
+    | n <= length (deck state) = expectedTreasure (deck state) * fromIntegral n
     | otherwise = deckWorth + expectedDiscardValue * discardsDrawn
     where
         deckWorth = sum . map treasureWorth . deck $ state

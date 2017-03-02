@@ -1,11 +1,9 @@
 module Data
-(
-    Notification(..), Defense(..), GameState(..), Action(..), Card(..),
-    cost,
-    treasureWorth, victoryWorth,
-    isTreasure, isAction
-)
-where
+  ( Notification(..), Defense(..), GameState(..), Action(..), Card(..)
+  , cost
+  , treasureWorth, victoryWorth
+  , isTreasure, isAction
+  ) where
 
 
 import Data.List (intercalate)
@@ -40,7 +38,7 @@ data Card = Cellar | Moat |
 
 -- Wraps a list of strings in parens, and lower cases all of them
 wrap :: [String] -> String
-wrap ss = "(" ++ intercalate " " (map (map toLower) ss) ++ ")"
+wrap ss = "(" ++ unwords (map (map toLower) ss) ++ ")"
 
 instance Show Action where
     show (Add c) = wrap ["add", show c]
@@ -51,7 +49,7 @@ instance Show Action where
 
 instance Show Defense where
     show (Reveal c) = wrap [show c]
-    show (Discard cs) = wrap $ "discard":(map show cs)
+    show (Discard cs) = wrap $ "discard" : map show cs
 
 
 isTreasure :: Card -> Bool

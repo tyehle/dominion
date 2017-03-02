@@ -1,8 +1,6 @@
 module MinerSpec
-(
-    minerTests
-)
-where
+  ( minerTests
+  ) where
 
 import Data
 import AgentInstances (Miner49er(..))

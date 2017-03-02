@@ -1,8 +1,6 @@
 module SmithySpec
-(
-    smithyTests
-)
-where
+  ( smithyTests
+  ) where
 
 import Data
 import AgentInstances (SmithyMoney(..))
@@ -15,8 +13,8 @@ import Test.Tasty.HUnit
 agent = SmithyMoney
 
 fullSupply = replicate 60 Copper ++ replicate 40 Silver ++ replicate 30 Gold
-            ++ (concat . map (replicate 8) $ [Estate, Duchy, Province])
-            ++ (concat . map (replicate 10) $ [Mine, Cellar, Market, Remodel, Smithy, Village, Woodcutter, Workshop, Moat, Militia])
+            ++ concatMap (replicate 8) [Estate, Duchy, Province]
+            ++ concatMap (replicate 10) [Mine, Cellar, Market, Remodel, Smithy, Village, Woodcutter, Workshop, Moat, Militia]
 
 endGameSupply = [Copper, Silver, Gold,
                  Estate, Duchy, Province,

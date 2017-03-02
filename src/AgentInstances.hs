@@ -1,9 +1,7 @@
 module AgentInstances
-(
-    Miner49er(..), Passive(..), SmithyMoney(..),
-    drive, runClient
-)
-where
+  ( Miner49er(..), Passive(..), SmithyMoney(..)
+  , drive, runClient
+  ) where
 
 import Parser (parseNotification)
 import Data
@@ -20,7 +18,7 @@ drive :: (Agent a) => a -> IO ()
 drive agent = do
     hSetBuffering stdin NoBuffering
     hSetBuffering stdout NoBuffering
-    hGetContents stdin >>= runClient agent
+    getContents >>= runClient agent
 
 
 runClient :: (Agent a) => a -> String -> IO ()
@@ -70,10 +68,10 @@ instance Agent Miner49er where
 data Passive = Passive
 
 instance Agent Passive where
-    tryAction _ state = Right state
-    tryAdd _ state = Right state
-    tryBuy _ state = Right state
-    tryDefend _ state = Right state
+    tryAction _ = Right
+    tryAdd _ = Right
+    tryBuy _ = Right
+    tryDefend _ = Right
     discardTo _ = discardPriority []
 
 
